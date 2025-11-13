@@ -1,6 +1,10 @@
 # Secure Authentication System
 
 ![Build Status](https://github.com/hstm/fastify-uws-auth/actions/workflows/build.yml/badge.svg?branch=main)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://www.docker.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-22-green.svg)](https://nodejs.org/)
 
 A production-ready authentication system combining Fastify REST API and uWebSockets.js for real-time communication, featuring JWT-based authentication with automatic token rotation and refresh token families.
 
@@ -296,8 +300,8 @@ docker compose down
 ## Technology Stack
 
 - **Language**: TypeScript
-- **Runtime**: Node.js 20
-- **REST Framework**: Fastify 4.x
+- **Runtime**: Node.js 22
+- **REST Framework**: Fastify 5.x
 - **WebSocket**: uWebSockets.js (native C++ bindings)
 - **Database**: PostgreSQL 16
 - **Reverse Proxy**: Nginx
