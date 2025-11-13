@@ -2,6 +2,8 @@
 
 A production-ready authentication system combining Fastify REST API and uWebSockets.js for real-time communication, featuring JWT-based authentication with automatic token rotation and refresh token families.
 
+<img src="screenshot.png" alt="Client Screenshot" width="50%">
+
 ## Architecture
 
 - **Fastify API**: REST endpoints for authentication and business logic
