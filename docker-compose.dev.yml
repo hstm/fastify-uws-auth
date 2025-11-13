@@ -1,0 +1,29 @@
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  fastify-api:
+    build:
+      context: ./fastify-api
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./fastify-api:/app
+      - /app/node_modules
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    restart: no
+
+  uws-server:
+    build:
+      context: ./uws-server
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - ./uws-server:/app
+      - /app/node_modules
+    command: npm run dev
+    ports:
+      - "3001:3001"
+    restart: no
+

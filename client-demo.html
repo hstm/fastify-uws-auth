@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Auth Demo - With Auto-Redirect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #474548;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2d3748;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #506ded;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #506ded;
+        }
+
+        button {
+            background: #506ded;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
+        }
+
+        .status.warning {
+            background: #feebc8;
+            color: #7c2d12;
+            border: 1px solid #fbd38d;
+        }
+
+        .log {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .log-time {
+            color: #4299e1;
+        }
+
+        .log-type {
+            font-weight: bold;
+            color: #48bb78;
+        }
+
+        .log-error {
+            color: #fc8181;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            border-left: 4px solid #506ded;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-box strong {
+            color: #506ded;
+        }
+
+        /* Session Expired Overlay */
+        .session-expired-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s;
+        }
+
+        .session-expired-overlay.show {
+            display: flex;
+        }
+
+        .session-expired-modal {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s;
+        }
+
+        .session-expired-modal h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .session-expired-modal p {
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .session-expired-modal .icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .session-expired-modal button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        .countdown {
+            color: #506ded;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(80, 109, 237, 0.5); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Session Expired Overlay -->
+    <div id="sessionExpiredOverlay" class="session-expired-overlay">
+        <div class="session-expired-modal">
+            <div class="icon">⏰</div>
+            <h2>Session Expired</h2>
+            <p>Your session has expired due to inactivity. You will be redirected to the login page in <span class="countdown" id="countdown">5</span> seconds.</p>
+            <button onclick="handleReLogin()">Log In Now</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Secure Authentication Demo</h1>
+            <p>Fastify REST API + uWebSockets.js with Token Rotation</p>
+            <div class="badge">With Auto-Redirect on Session Expiry</div>
+        </div>
+
+        <div class="content">
+            <!-- Status -->
+            <div id="status" style="display: none;"></div>
+
+            <!-- Login Section -->
+            <div class="section" id="loginSection">
+                <h2>1. Authentication</h2>
+                <div class="info-box">
+                    <strong>Test Credentials:</strong> username: <code>testuser</code> | password: <code>password123</code>
+                </div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" value="testuser">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" value="password123">
+                </div>
+                <button id="loginBtn" onclick="login()">Login</button>
+                <button id="logoutBtn" onclick="logout()" disabled>Logout</button>
+            </div>
+
+            <!-- WebSocket Section -->
+            <div class="section">
+                <h2>2. WebSocket Connection</h2>
+                <button id="connectBtn" onclick="connectWebSocket()" disabled>Connect WebSocket</button>
+                <button id="disconnectBtn" onclick="disconnectWebSocket()" disabled>Disconnect</button>
+                <button id="pingBtn" onclick="sendPing()" disabled>Send Ping</button>
+                <button id="testReauthBtn" onclick="testReauth()" disabled>Test Reauth</button>
+            </div>
+
+            <!-- Protected API Section -->
+            <div class="section">
+                <h2>3. Protected API</h2>
+                <button id="protectedBtn" onclick="callProtectedAPI()" disabled>Call Protected API</button>
+                <button id="refreshBtn" onclick="refreshToken()" disabled>Refresh Token</button>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="section">
+                <h2>Activity Log</h2>
+                <div class="log" id="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let accessToken = null;
+        let ws = null;
+        let refreshInterval = null;
+        let sessionExpiredTimer = null;
+        let isRefreshing = false;
+
+        const API_BASE = 'http://localhost/api';
+        const WS_BASE = 'ws://localhost/ws';
+
+        // Logging
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'log-error' : 'log-type';
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${className}">[${type.toUpperCase()}]</span> ${message}`;
+            
+            logEl.insertBefore(entry, logEl.firstChild);
+        }
+
+        // Status display
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // Session Expired Handler
+        function showSessionExpired() {
+            log('Session expired - showing redirect modal', 'warning');
+            
+            const overlay = document.getElementById('sessionExpiredOverlay');
+            overlay.classList.add('show');
+            
+            let countdown = 5;
+            const countdownEl = document.getElementById('countdown');
+            
+            // Clear any existing timer first
+            if (sessionExpiredTimer) {
+                clearInterval(sessionExpiredTimer);
+            }
+            
+            sessionExpiredTimer = setInterval(() => {
+                countdown--;
+                countdownEl.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(sessionExpiredTimer);
+                    sessionExpiredTimer = null;
+                    handleReLogin();
+                }
+            }, 1000);
+        }
+
+        function hideSessionExpired() {
+            const overlay = document.getElementById('sessionExpiredOverlay');
+            overlay.classList.remove('show');
+            
+            if (sessionExpiredTimer) {
+                clearInterval(sessionExpiredTimer);
+                sessionExpiredTimer = null;
+            }
+        }
+
+        function handleReLogin() {
+            hideSessionExpired();
+            
+            // Clean up everything
+            accessToken = null;
+            stopRefreshCheck();
+            
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            // Reset UI
+            resetUIToLogin();
+            
+            // Clear form
+            document.getElementById('username').value = 'testuser';
+            document.getElementById('password').value = 'password123';
+            
+            // Focus on login
+            document.getElementById('username').focus();
+            
+            log('Please log in again', 'info');
+            showStatus('Session expired. Please log in again.', 'warning');
+        }
+
+        // Reset UI to login state
+        function resetUIToLogin() {
+            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('logoutBtn').disabled = true;
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = true;
+            document.getElementById('pingBtn').disabled = true;
+            document.getElementById('testReauthBtn').disabled = true;
+            document.getElementById('protectedBtn').disabled = true;
+            document.getElementById('refreshBtn').disabled = true;
+        }
+
+        // Login
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                log('Attempting login...', 'info');
+                
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Login failed');
+                }
+
+                const data = await response.json();
+                accessToken = data.accessToken;
+
+                log(`Login successful! User: ${data.user.username}`, 'success');
+                showStatus('Login successful!', 'success');
+
+                // Enable buttons
+                document.getElementById('loginBtn').disabled = true;
+                document.getElementById('logoutBtn').disabled = false;
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('protectedBtn').disabled = false;
+                document.getElementById('refreshBtn').disabled = false;
+
+                // Start auto-refresh check
+                startRefreshCheck();
+
+            } catch (error) {
+                log(`Login failed: ${error.message}`, 'error');
+                showStatus(`Login failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                log('Logging out...', 'info');
+
+                if (ws) {
+                    disconnectWebSocket();
+                }
+
+                await fetch(`${API_BASE}/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                accessToken = null;
+                stopRefreshCheck();
+
+                log('Logout successful', 'success');
+                showStatus('Logout successful', 'success');
+
+                // Reset buttons
+                resetUIToLogin();
+
+            } catch (error) {
+                log(`Logout failed: ${error.message}`, 'error');
+                showStatus(`Logout failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Connect WebSocket
+        function connectWebSocket() {
+            if (!accessToken) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                showStatus('WebSocket already connected', 'warning');
+                return;
+            }
+
+            try {
+                log('Connecting to WebSocket...', 'info');
+                
+                ws = new WebSocket(`${WS_BASE}?token=${accessToken}`);
+
+                ws.onopen = () => {
+                    log('WebSocket connected!', 'success');
+                    showStatus('WebSocket connected!', 'success');
+                    
+                    document.getElementById('connectBtn').disabled = true;
+                    document.getElementById('disconnectBtn').disabled = false;
+                    document.getElementById('pingBtn').disabled = false;
+                    document.getElementById('testReauthBtn').disabled = false;
+                };
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    log(`Received: ${JSON.stringify(data)}`, 'info');
+
+                    if (data.type === 'token_expiring') {
+                        showStatus('Token expiring soon! Refreshing...', 'warning');
+                        refreshTokenAndReauth(false);
+                    }
+
+                    if (data.type === 'error' && data.payload.requireReauth) {
+                        showStatus('Token expired! Refreshing...', 'warning');
+                        refreshTokenAndReauth(false);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    log('WebSocket error', 'error');
+                    showStatus('WebSocket error', 'error');
+                };
+
+                ws.onclose = (event) => {
+                    log(`WebSocket closed: ${event.code} - ${event.reason}`, 'info');
+                    
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    document.getElementById('pingBtn').disabled = true;
+                    document.getElementById('testReauthBtn').disabled = true;
+                };
+
+            } catch (error) {
+                log(`WebSocket connection failed: ${error.message}`, 'error');
+                showStatus(`WebSocket connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Disconnect WebSocket
+        function disconnectWebSocket() {
+            if (ws) {
+                log('Disconnecting WebSocket...', 'info');
+                ws.close();
+                ws = null;
+            }
+        }
+
+        // Send Ping
+        function sendPing() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showStatus('WebSocket not connected', 'error');
+                return;
+            }
+
+            const message = { type: 'ping' };
+            ws.send(JSON.stringify(message));
+            log('Sent ping', 'info');
+        }
+
+        // Refresh Token
+        async function refreshToken(isManualReauth = false) {
+            if (isRefreshing) {
+                log('Refresh already in progress, skipping...', 'info');
+                return null;
+            }
+
+            try {
+                isRefreshing = true;
+                
+                log('Refreshing access token...', 'info');
+
+                const response = await fetch(`${API_BASE}/refresh`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.status === 401) {
+                    log('Refresh token expired!', 'error');
+                    
+                    accessToken = null;
+                    stopRefreshCheck();
+                    
+                    if (ws) {
+                        ws.close();
+                        ws = null;
+                    }
+                    
+                    if (!isManualReauth) {
+                        hideSessionExpired();
+                        showSessionExpired();
+                    } else {
+                        // Enhanced feedback for manual reauth
+                        showStatus('⚠️ Session expired! Please log in again to continue.', 'warning');
+                        resetUIToLogin();
+                        
+                        // Optional: Highlight login button
+                        const loginBtn = document.getElementById('loginBtn');
+                        loginBtn.style.animation = 'pulse 1s ease-in-out 3';
+                        setTimeout(() => {
+                            loginBtn.style.animation = '';
+                        }, 3000);
+                    }
+                    
+                    return null;
+                }
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Token refresh failed');
+                }
+
+                const data = await response.json();
+                accessToken = data.accessToken;
+
+                log('Token refreshed successfully', 'success');
+                showStatus('Token refreshed successfully', 'success');
+                
+                return data.accessToken;
+
+            } catch (error) {
+                log(`Token refresh failed: ${error.message}`, 'error');
+                showStatus(`Token refresh failed: ${error.message}`, 'error');
+                
+                if (!isManualReauth) {
+                    stopRefreshCheck();
+                }
+                
+                return null;
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        // Refresh Token and Reauth WebSocket
+        async function refreshTokenAndReauth(isManualReauth = false) {
+            try {
+                const newToken = await refreshToken(isManualReauth);
+                
+                if (!newToken) {
+                    log('Token refresh failed, cannot reauth WebSocket', 'error');
+                    return;
+                }
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const message = {
+                        type: 'reauth',
+                        access: accessToken
+                    };
+                    ws.send(JSON.stringify(message));
+                    log('Sent reauth message to WebSocket', 'success');
+                    
+                    if (isManualReauth) {
+                        showStatus('WebSocket re-authenticated!', 'success');
+                    }
+                } else {
+                    log('WebSocket not connected, skipping reauth message', 'info');
+                }
+            } catch (error) {
+                log(`Reauth failed: ${error.message}`, 'error');
+                
+                if (!isManualReauth) {
+                    showStatus(`Reauth failed: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Test Reauth
+        function testReauth() {
+            log('=== Manual Reauth Test ===', 'info');
+            
+            if (!accessToken) {
+                showStatus('Not logged in! Please login first.', 'error');
+                log('Cannot test reauth: No access token', 'error');
+                return;
+            }
+            
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showStatus('WebSocket not connected! Connect first.', 'error');
+                log('Cannot test reauth: WebSocket not connected', 'error');
+                return;
+            }
+            
+            log(`WebSocket state: ${ws.readyState} (1 = OPEN)`, 'info');
+            
+            // Stop auto-refresh to avoid conflicts
+            const wasAutoRefreshing = !!refreshInterval;
+            if (wasAutoRefreshing) {
+                log('Pausing auto-refresh during manual test', 'info');
+                stopRefreshCheck();
+            }
+            
+            // Cancel any pending session expired modal
+            hideSessionExpired();
+            
+            // Do manual reauth
+            refreshTokenAndReauth(true).then(() => {
+                if (wasAutoRefreshing && accessToken) {
+                    log('Resuming auto-refresh', 'info');
+                    startRefreshCheck();
+                }
+            });
+        }
+
+        // Call Protected API
+        async function callProtectedAPI() {
+            if (!accessToken) {
+                showStatus('Please login first', 'error');
+                return;
+            }
+
+            try {
+                log('Calling protected API...', 'info');
+
+                const response = await fetch(`${API_BASE}/protected`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'API call failed');
+                }
+
+                const data = await response.json();
+                log(`Protected API response: ${JSON.stringify(data)}`, 'success');
+                showStatus('Protected API call successful', 'success');
+
+            } catch (error) {
+                log(`Protected API call failed: ${error.message}`, 'error');
+                showStatus(`Protected API call failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-refresh token before expiry
+        function startRefreshCheck() {
+            stopRefreshCheck();
+            
+            refreshInterval = setInterval(() => {
+                if (!accessToken) {
+                    log('Auto-refresh: Not logged in, stopping timer', 'info');
+                    stopRefreshCheck();
+                    return;
+                }
+                
+                log('Auto-refresh check...', 'info');
+                refreshTokenAndReauth(false);
+            }, 5 * 60 * 1000);
+            
+            log('Auto-refresh timer started (every 5 minutes)', 'info');
+        }
+
+        function stopRefreshCheck() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+                log('Auto-refresh timer stopped', 'info');
+            }
+        }
+
+        // Initial log
+        log('Demo application loaded', 'info');
+        log('Ready to authenticate', 'info');
+        log('✨ Auto-redirect enabled for expired sessions', 'info');
+    </script>
+</body>
+</html>
