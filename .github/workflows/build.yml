@@ -119,29 +119,61 @@ jobs:
           docker compose config > /dev/null
           echo "✅ docker-compose.yml is valid"
       
-      - name: Check Nginx config files
+      - name: Validate Nginx configuration
         run: |
+          echo "📄 Validating nginx/nginx.conf..."
+          
+          # Check file exists
           if [ ! -f "nginx/nginx.conf" ]; then
             echo "❌ nginx.conf not found"
             exit 1
           fi
           
-          # Check for required upstream configuration
-          if grep -q "upstream.*fastify-api" nginx/nginx.conf && \
-             grep -q "proxy_pass.*fastify-api" nginx/nginx.conf; then
-            echo "✅ nginx.conf has expected upstream configuration"
+          # Check for upstream blocks
+          if grep -q "upstream.*fastify_backend\|upstream.*fastify-api" nginx/nginx.conf; then
+            echo "✅ Fastify upstream configured"
           else
-            echo "❌ nginx.conf missing required configuration"
+            echo "❌ Missing Fastify upstream configuration"
             exit 1
+          fi
+          
+          if grep -q "upstream.*uws_backend\|upstream.*uws-server" nginx/nginx.conf; then
+            echo "✅ uWS upstream configured"
+          else
+            echo "❌ Missing uWS upstream configuration"
+            exit 1
+          fi
+          
+          # Check for proxy_pass directives
+          if grep -q "proxy_pass" nginx/nginx.conf; then
+            echo "✅ Proxy pass directives found"
+          else
+            echo "❌ No proxy_pass directives found"
+            exit 1
+          fi
+          
+          # Check for WebSocket upgrade headers
+          if grep -q "Upgrade.*\$http_upgrade" nginx/nginx.conf; then
+            echo "✅ WebSocket upgrade headers configured"
+          else
+            echo "⚠️  Warning: WebSocket upgrade headers not found"
           fi
           
           # Check for rate limiting
           if grep -q "limit_req_zone" nginx/nginx.conf; then
-            echo "✅ nginx.conf has rate limiting configured"
+            echo "✅ Rate limiting configured"
           else
-            echo "⚠️  Warning: nginx.conf has no rate limiting"
+            echo "⚠️  Warning: No rate limiting configured"
           fi
           
+          # Check for security headers
+          if grep -q "X-Frame-Options\|X-Content-Type-Options" nginx/nginx.conf; then
+            echo "✅ Security headers configured"
+          else
+            echo "⚠️  Warning: Security headers not found"
+          fi
+          
+          echo ""
           echo "✅ nginx.conf validation complete"
 
   summary:
