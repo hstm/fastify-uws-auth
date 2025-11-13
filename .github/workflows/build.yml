@@ -114,10 +114,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Validate docker-compose.yml
+      - name: Validate docker compose.yml
         run: |
-          docker-compose config > /dev/null
-          echo "docker-compose.yml is valid"
+          docker compose config > /dev/null
+          echo "docker compose.yml is valid"
       
       - name: Validate Nginx config
         run: |
