@@ -1,6 +1,6 @@
 # Secure Authentication System
 
-![Build Status](https://github.com/hstm/fastify-uws-auth/actions/workflows/build.yml/badge.svg)
+![Build Status](https://github.com/hstm/fastify-uws-auth/actions/workflows/build.yml/badge.svg?branch=main)
 
 A production-ready authentication system combining Fastify REST API and uWebSockets.js for real-time communication, featuring JWT-based authentication with automatic token rotation and refresh token families.
 
